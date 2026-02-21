@@ -8,28 +8,45 @@ function Createpost({ posts, setPosts, loggedInUser }) {
   const [location, setLocation] = useState("");
   const [imageUrl, setImageUrl] = useState("");
 
-const handleSubmit = (e) => {
-  e.preventDefault();
+ const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!loggedInUser) {
-    alert("Please login first!");
-    navigate("/login");
-    return;
-  }
+    if (!loggedInUser) {
+      alert("Please login first!");
+      navigate("/login");
+      return;
+    }
 
-  const newPost = {
-    id: posts.length + 1,
-    username: loggedInUser.username,
-    pokemonName,
-    type,
-    location,
-    imageUrl,
+    const newPost = {
+      username: loggedInUser.username,
+      pokemonName,
+      type,
+      location,
+      imageUrl,
+    };
+
+    try {
+      const res = await fetch("http://localhost:5000/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newPost),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setPosts([...posts, { ...newPost, id: data.id || posts.length + 1 }]);
+        alert("Post created!");
+        navigate("/");
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error.");
+    }
   };
 
-  setPosts([...posts, newPost]);
-  alert("Mock post created!");
-  navigate("/");
-};
 
   return (
     <div style={{ padding: "1rem" }}>

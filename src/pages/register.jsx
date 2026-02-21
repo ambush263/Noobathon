@@ -6,12 +6,30 @@ function Register() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-const handleSubmit = (e) => {
-  e.preventDefault();
+const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  alert("Mock registration successful!");
-  navigate("/login");
-};
+    try {
+      const res = await fetch("http://localhost:5000/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Account created successfully!");
+        navigate("/login");
+      } else {
+        alert(data.message); // e.g., username already exists
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error. Try again later.");
+    }
+  };
+
   return (
     <div>
       <h1>Register</h1>

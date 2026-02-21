@@ -6,14 +6,30 @@ function Login({ setLoggedInUser }) {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-const handleSubmit = (e) => {
-  e.preventDefault();
+ const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // MOCK LOGIN
-  setLoggedInUser({ username });
-  alert("Mock login successful!");
-  navigate("/");
-};
+    try {
+      const res = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setLoggedInUser(data.user);
+        alert("Login successful!");
+        navigate("/");
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error.");
+    }
+  };
   return (
     <div style={{ padding: "1rem" }}>
       <h1>Login</h1>

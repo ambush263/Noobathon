@@ -1,61 +1,88 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function CreatePost({ posts, setPosts }) {
-  const [name, setName] = useState("");
+function Createpost({ posts, setPosts, loggedInUser }) {
+  const navigate = useNavigate();
+  const [pokemonName, setPokemonName] = useState("");
   const [type, setType] = useState("");
   const [location, setLocation] = useState("");
   const [imageUrl, setImageUrl] = useState("");
 
-  const navigate = useNavigate();
-
-  const handleSubmit = (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newPost = { id: Date.now(), name, type, location, imageUrl };
+    if (!loggedInUser) {
+      alert("Please login first!");
+      navigate("/login");
+      return;
+    }
 
-    setPosts([...posts, newPost]);
+    const newPost = {
+      username: loggedInUser.username,
+      pokemonName,
+      type,
+      location,
+      imageUrl,
+    };
 
-    navigate("/");
+    try {
+      const res = await fetch("http://localhost:5000/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newPost),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setPosts([...posts, { ...newPost, id: data.id || posts.length + 1 }]);
+        alert("Post created!");
+        navigate("/");
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Server error.");
+    }
   };
 
-  return (
-    <div>
-      <h1>Create a New Post</h1>
 
+  return (
+    <div style={{ padding: "1rem" }}>
+      <h1>Create Post</h1>
       <form onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Pokemon Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={pokemonName}
+          onChange={(e) => setPokemonName(e.target.value)}
+          required
         /><br /><br />
-
         <input
           type="text"
           placeholder="Type"
           value={type}
           onChange={(e) => setType(e.target.value)}
+          required
         /><br /><br />
-
         <input
           type="text"
-          placeholder="Location Found"
+          placeholder="Location"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
+          required
         /><br /><br />
-
         <input
           type="text"
-          placeholder="Image URL"
+          placeholder="Image URL (optional)"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
         /><br /><br />
-
         <button type="submit">Post</button>
       </form>
     </div>
   );
 }
 
-export default CreatePost;
+export default Createpost;

@@ -49,5 +49,20 @@ def initialise():
     
     return {"status": "success", "message": "Post saved!"}, 200
 
+@app.route('/register', methods=['POST'])
+def register():
+    info = request.get_json()
+    name = info.get("username")
+    password = info.get("password")
+    users_ref = db.collection('users').stream()
+    for doc in users_ref:
+        if doc.to_dict().get("username") == name:
+            return {"message": "Username already exists!"}, 400
+    db.collection('users').add({
+        "username": name,
+        "password": password
+    })
+    return {"message" : "User registered successfully!"}, 200
+
 if __name__ == "__main__":
     app.run(debug=True)

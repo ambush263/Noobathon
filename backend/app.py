@@ -64,5 +64,16 @@ def register():
     })
     return {"message" : "User registered successfully!"}, 200
 
+@app.route('/login', methods=['POST'])
+def login():
+    info = request.get_json()
+    name = info.get("username")
+    password = info.get("password")
+    users_ref = db.collection('users').stream()
+    for doc in users_ref:
+        user_data = doc.to_dict()
+        if user_data.get("username") == name and user_data.get("password") == password:
+            return {"message": "Login successful!"}, 200
+    return {"message": "Invalid credentials!"}, 400
 if __name__ == "__main__":
     app.run(debug=True)

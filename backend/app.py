@@ -1,16 +1,13 @@
-from flask import Flask
+from flask import Flask,render_template,request, redirect, url_for
+import random
 
 app = Flask(__name__)
-
 @app.route('/')
-def welcome():
-    # This is the "Public" face of the island
-    return """
-    <h1>Welcome to the New Pokemon Island!</h1>
-    <p>Document your discoveries and share them with the world.</p>
-    <hr>
-    <p style='color: grey;'>Property of the Regional Research Committee (Not Team Rocket)</p>
-    """
+def index():
+    return 'Index Page'
 
+@app.route('/hello')
+def hello():
+    return 'Hello, World'
 if __name__ == "__main__":
     app.run(debug=True)

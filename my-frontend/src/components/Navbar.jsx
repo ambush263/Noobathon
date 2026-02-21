@@ -1,8 +1,19 @@
-function Navbar() {
+import { Link } from "react-router-dom";
+
+function Navbar({ loggedInUser }) {
   return (
-    <div style={{ padding: "10px", background: "#111", color: "white" }}>
-      <h2>🚀 Team Rocket</h2>
-    </div>
+    <nav style={{ padding: "1rem", borderBottom: "1px solid #ccc" }}>
+      <Link to="/">Feed</Link> |{" "}
+      {loggedInUser ? (
+        <>
+          <Link to="/create">Create Post</Link> | Logged in as: {loggedInUser.username}
+        </>
+      ) : (
+        <>
+          <Link to="/login">Login</Link> | <Link to="/register">Register</Link>
+        </>
+      )}
+    </nav>
   );
 }
 

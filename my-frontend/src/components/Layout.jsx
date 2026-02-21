@@ -1,5 +1,5 @@
 // Layout.jsx
-import Navbar from "./Navbar";
+import Navbar from "./navbar";
 
 function Layout({ children }) {
   return (

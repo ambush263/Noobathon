@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
 import Postdetail from "./pages/postdetail";
-
+import Help from "./pages/help";
 import Feed from "./pages/feed";
 import Createpost from "./pages/createpost";
 import Login from "./pages/login";
@@ -15,16 +15,44 @@ function App() {
   return (
     <BrowserRouter>
       <Navbar loggedInUser={loggedInUser} />
+
       <Routes>
-        <Route path="/" element={<Feed posts={posts} />} />
+        <Route 
+          path="/" 
+          element={<Feed posts={posts} setPosts={setPosts} />} 
+        />
+
         <Route
           path="/create"
-          element={<Createpost posts={posts} setPosts={setPosts} loggedInUser={loggedInUser} />}
+          element={
+            <Createpost 
+              posts={posts}
+              setPosts={setPosts}
+              loggedInUser={loggedInUser}
+            />
+          }
         />
-        <Route path="/login" element={<Login setLoggedInUser={setLoggedInUser} />} />
-        <Route path="/register" element={<Register />} />
+
+        <Route 
+          path="/login" 
+          element={<Login setLoggedInUser={setLoggedInUser} />} 
+        />
+
+        <Route 
+          path="/register" 
+          element={<Register />} 
+        />
+
+        <Route 
+          path="/post/:id" 
+          element={<Postdetail />} 
+        />
+
+        <Route 
+          path="/help" 
+          element={<Help />} 
+        />
       </Routes>
-      <Route path="/post/:id" element={<Postdetail />} />
     </BrowserRouter>
   );
 }

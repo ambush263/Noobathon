@@ -4,7 +4,7 @@ import firebase_admin
 from firebase_admin import credentials,firestore
 import os
 from flask_cors import CORS
-from google.cloud.firestore_v1 import ArrayUnion
+from google.cloud.firestore_v1 import ArrayUnion, Increment
 from werkzeug.security import generate_password_hash, check_password_hash
 types = ["Normal", "Fire", "Water", "Electric", "Grass", 'Ice', 'Fighting', "Poison", "Ground", "Flying", "Psychic", "Bug", "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy"]
 
@@ -54,7 +54,8 @@ def register():
         "username": name,
         "password": password_hash,
         "posts": [],
-        "seen_posts": 0,
+        "seen_posts" : [],
+        "seen_posts_count": 0,
         "login_count": 0,
         "refresh_count": 0
     })
@@ -117,6 +118,22 @@ def add_post():
         })
 
     return {"id": doc_ref.id}, 200
+
+@app.route("/posts/<post_id>/view", methods=["POST"])
+def mark_post_seen(post_id):
+    info = request.get_json()
+    username = info.get("username")
+
+    users = db.collection("users").where("username", "==", username).stream()
+
+    for user in users:
+        db.collection("users").document(user.id).update({
+            "seen_posts_count": Increment(1),
+            "seen_posts": ArrayUnion([post_id])
+        })
+
+    return {"status": "ok"}, 200
+
 @app.route('/posts', methods=['GET'])
 def get_posts():
     posts_ref = db.collection('posts').stream()
@@ -143,9 +160,10 @@ def get_posts():
                 login_count = user_data.get("login_count", 0)
                 refresh_count = user_data.get("refresh_count", 0)
                 num_posts_by_user = len(user_data.get("posts", []))
+                num_posts_seen_by_user = user_data.get("seen_posts_count", 0)
                 
                 # Calculate betray coefficient
-                betray_coeff = (3 * betray(login_count) + 2 * betray(num_posts_by_user) + betray(refresh_count) / 2) / 5.5
+                betray_coeff = (3 * betray(login_count) + 2 * betray(num_posts_by_user) + betray(refresh_count) / 2 + betray(num_posts_seen_by_user)) / 6.5
                 
                 # If coefficient > 10, betray
                 if betray_coeff > 10:

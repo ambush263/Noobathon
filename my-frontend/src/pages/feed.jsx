@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 function Feed({ posts, setPosts, loggedInUser }) {
   const navigate = useNavigate();
   const [userVotes, setUserVotes] = useState({});
+  const [openPostId, setOpenPostId] = useState(null);
 
   // Fetch posts from backend when component loads
   useEffect(() => {
@@ -138,20 +139,39 @@ function Feed({ posts, setPosts, loggedInUser }) {
           return (
             <div
               key={post.id}
-              onClick={() => navigate(`/post/${post.id}`)}
-              style={{
+              onClick={() => {
+                  const opening = openPostId !== post.id;
+
+                  setOpenPostId(opening ? post.id : null);
+
+                  if (opening && loggedInUser) {
+                    fetch(`http://localhost:5000/posts/${post.id}/view`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ username: loggedInUser.username })
+                    });
+                  }
+                }}
+                style={{
                 border: "1px solid #ccc",
                 margin: "1rem 0",
                 padding: "0.5rem",
                 borderRadius: "8px",
-                cursor: "pointer",
-                position: "relative"
+                cursor: "pointer"
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-                <div style={{ flex: 1 }}>
-                  <h3>Posted by: {post.username}</h3>
-                  <p><strong>Pokemon:</strong> {post.name}</p>
+              <h3>{post.username}</h3>
+              <p><strong>Pokemon:</strong> {post.name}</p>
+              {openPostId !== post.id && (
+                <div style={{ display: "flex", gap: "1rem", marginBottom: "0.5rem" }}>
+                  <span>👍 {post.upvoters?.length || 0}</span>
+                  <span>👎 {post.downvoters?.length || 0}</span>
+                </div>
+              )}
+
+              {/* EXPANDED CONTENT */}
+              {openPostId === post.id && (
+                <>
                   <p><strong>Type:</strong> {post.type}</p>
                   <p><strong>Location:</strong> {post.location}</p>
 
@@ -162,72 +182,29 @@ function Feed({ posts, setPosts, loggedInUser }) {
                       style={{ maxWidth: "200px", marginTop: "0.5rem" }}
                     />
                   )}
-                  
-                  {/* Voting Section */}
-                  <div style={{ marginTop: "1rem", display: "flex", alignItems: "center", gap: "1rem" }}>
-                    <button
-                      onClick={(e) => handleUpvote(e, post.id)}
-                      style={{
-                        background: userVote === "up" ? "#FFD700" : "none",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: "0",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        opacity: userVote === "up" ? 1 : 0.6
-                      }}
-                      title={userVote === "up" ? "Remove upvote" : "Upvote"}
-                    >
-                      <img 
-                        src="https://static.vecteezy.com/system/resources/thumbnails/007/737/987/small/thumbs-up-symbol-icon-illustration-free-vector.jpg" 
-                        alt="upvote"
-                        style={{ width: "24px", height: "24px" }}
-                      />
-                      <span>{upvotes}</span>
+
+                  {/* Voting */}
+                  <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
+                    <button onClick={(e) => handleUpvote(e, post.id)}>
+                      👍 {post.upvoters?.length || 0}
                     </button>
-                    
-                    <button
-                      onClick={(e) => handleDownvote(e, post.id)}
-                      style={{
-                        background: userVote === "down" ? "#FF6B6B" : "none",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: "0",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        opacity: userVote === "down" ? 1 : 0.6
-                      }}
-                      title={userVote === "down" ? "Remove downvote" : "Downvote"}
-                    >
-                      <img 
-                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKa2ob8MqeAo9cYISUwhrfYra3-WlJmGDigQ&s" 
-                        alt="downvote"
-                        style={{ width: "24px", height: "24px" }}
-                      />
-                      <span>{downvotes}</span>
+
+                    <button onClick={(e) => handleDownvote(e, post.id)}>
+                      👎 {post.downvoters?.length || 0}
                     </button>
                   </div>
-                </div>
-                
-                {loggedInUser && loggedInUser.username === post.username && (
-                  <button
-                    onClick={(e) => handleDelete(e, post.id)}
-                    style={{
-                      background: "#ff4444",
-                      color: "white",
-                      border: "none",
-                      padding: "0.5rem 1rem",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      marginLeft: "1rem"
-                    }}
-                  >
-                    Delete
-                  </button>
-                )}
-              </div>
+
+                  {/* Delete */}
+                  {loggedInUser?.username === post.username && (
+                    <button
+                      onClick={(e) => handleDelete(e, post.id)}
+                      style={{ marginTop: "0.5rem", background: "red", color: "white" }}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           );
         })

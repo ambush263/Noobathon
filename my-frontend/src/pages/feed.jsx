@@ -162,6 +162,18 @@ function Feed({ posts, setPosts, loggedInUser }) {
             >
               <h3>{post.username}</h3>
               <p><strong>Pokemon:</strong> {post.name}</p>
+              {post.imageUrl && openPostId !== post.id && (
+                <img
+                  src={post.imageUrl}
+                  alt={post.name}
+                  style={{
+                    maxWidth: "150px",
+                    marginTop: "0.5rem",
+                    borderRadius: "6px",
+                    display: "block"
+                  }}
+                />
+              )}
               {openPostId !== post.id && (
                 <div style={{ display: "flex", gap: "1rem", marginBottom: "0.5rem" }}>
                   <span>👍 {post.upvoters?.length || 0}</span>

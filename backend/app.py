@@ -5,16 +5,15 @@ from firebase_admin import credentials,firestore
 import os
 from flask_cors import CORS
 from google.cloud.firestore_v1 import ArrayUnion
-
+from werkzeug.security import generate_password_hash, check_password_hash
 types = ["Normal", "Fire", "Water", "Electric", "Grass", 'Ice', 'Fighting', "Poison", "Ground", "Flying", "Psychic", "Bug", "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy"]
-num_of_post = 0
+
 app = Flask(__name__)
 
 cred = credentials.Certificate(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-app = Flask(__name__)
 CORS(app) # This allows  React frontend to talk to backend
 
 num_of_post = 0
@@ -33,18 +32,10 @@ def initialise():
     og_type = info_json.get("type")
     og_location = info_json.get("location")
     
-   
-    current_betray_score = betray(num_of_post)
-    final_type = og_type 
-    
-    if current_betray_score > 5:
-        wrong_types = [t for t in types if t != og_type]
-        final_type = random.choice(wrong_types)
-        
 
     db.collection('posts').add({
         "name": og_name,
-        "type": final_type, 
+        "type": og_type, 
         "location": og_location
     })
     
@@ -54,14 +45,14 @@ def initialise():
 def register():
     info = request.get_json()
     name = info.get("username")
-    password = info.get("password")
+    password_hash = generate_password_hash(info.get("password"))
     users_ref = db.collection('users').stream()
     for doc in users_ref:
         if doc.to_dict().get("username") == name:
             return {"message": "Username already exists!"}, 400
     db.collection('users').add({
         "username": name,
-        "password": password,
+        "password": password_hash,
         "posts": [],
         "seen_posts": 0,
         "login_count": 0,
@@ -73,11 +64,11 @@ def register():
 def login():
     info = request.get_json()
     name = info.get("username")
-    password = info.get("password")
+    password_hash = info.get("password")
     users_ref = db.collection('users').stream()
     for doc in users_ref:
         user_data = doc.to_dict()
-        if user_data.get("username") == name and user_data.get("password") == password:
+        if user_data.get("username") == name and check_password_hash(user_data.get("password"), password_hash):
             # Increment login count
             login_count = user_data.get("login_count", 0) + 1
             db.collection("users").document(doc.id).update({

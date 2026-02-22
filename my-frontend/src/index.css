@@ -1,7 +1,6 @@
 /* ============================================================
    POKÉDEX FRONTEND — index.css
    Drop-in replacement for the default Vite index.css.
-   Works with existing JSX element selectors (no className changes needed).
    ============================================================ */
 
 /* ── Google Fonts ────────────────────────────────────────── */
@@ -9,6 +8,7 @@
 
 /* ── Variables ───────────────────────────────────────────── */
 :root {
+  /* Original Colors */
   --red:        #E3350D;
   --red-dark:   #B02208;
   --red-light:  #FF6B4A;
@@ -24,6 +24,10 @@
   --surface:    rgba(255, 255, 255, 0.05);
   --surface-hover: rgba(255, 255, 255, 0.09);
 
+  /* New Game Boy Colors for Inputs */
+  --gb-green:   #98cb98; 
+  --gb-dark:    #0f380f;
+
   --font-display: 'Bangers', cursive;
   --font-body:    'Nunito', sans-serif;
 
@@ -32,9 +36,12 @@
   --radius-lg:  22px;
   --radius-full:9999px;
 
-  --shadow:     4px 6px 0px rgba(0,0,0,0.5);
+  /* Classic Shadows vs Chunky Shadows */
+  --shadow-classic: 4px 6px 0px rgba(0,0,0,0.5);
   --shadow-red: 0 0 20px rgba(227, 53, 13, 0.35);
   --shadow-yellow: 0 0 20px rgba(255, 203, 5, 0.35);
+  --shadow:      4px 4px 0px rgba(26, 26, 46, 1);
+  --shadow-hover: 6px 6px 0px rgba(26, 26, 46, 1);
 
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -54,8 +61,8 @@ html {
 
 body {
   font-family: var(--font-body);
-  font-weight: 400;
-  background-color: var(--black);
+  font-weight: 600;
+  background-color: #222224; /* Slightly darker for the game grid to pop */
   color: var(--white);
   min-height: 100vh;
   min-width: 320px;
@@ -63,39 +70,50 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Subtle background atmosphere */
-  background-image:
-    radial-gradient(circle at 15% 10%, rgba(59,76,202,0.12) 0%, transparent 45%),
-    radial-gradient(circle at 85% 85%, rgba(227,53,13,0.10) 0%, transparent 45%);
+  /* Retro battle grid background */
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 2px, transparent 2px);
+  background-size: 32px 32px;
 
-  /* Remove Vite's centering default */
   display: block;
   place-items: unset;
 }
 
-/* ── Typography ──────────────────────────────────────────── */
+/* ── Typography (Pokémon Styled) ─────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   letter-spacing: 2px;
   line-height: 1.15;
+}
+
+h1 { 
+  font-size: clamp(2.4rem, 6vw, 3.8rem); 
   color: var(--yellow);
+  -webkit-text-stroke: 2px var(--blue); 
+  text-shadow: 4px 4px 0 var(--black);
+}
+
+h2 { 
+  font-size: clamp(1.8rem, 4vw, 2.8rem); 
+  color: var(--yellow); 
+  -webkit-text-stroke: 1.5px var(--blue);
   text-shadow: 3px 3px 0 var(--black);
 }
 
-h1 { font-size: clamp(2.4rem, 6vw, 3.8rem); }
-h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); color: var(--white); }
-h3 { font-size: 1.4rem; color: var(--white); }
-h4 { font-size: 1.2rem; color: var(--white); }
+h3 { font-size: 1.4rem; color: var(--black); }
+h4 { font-size: 1.2rem; color: var(--black); }
 
 p {
   font-size: 1rem;
-  color: rgba(248, 248, 248, 0.80);
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.65;
 }
 
 p strong {
   color: var(--yellow);
-  font-weight: 700;
+  font-weight: 900;
+  -webkit-text-stroke: 0.5px var(--black);
 }
 
 /* ── Links ───────────────────────────────────────────────── */
@@ -103,26 +121,26 @@ a {
   font-family: var(--font-display);
   font-weight: 500;
   letter-spacing: 1.5px;
-  color: var(--white);
+  color: var(--yellow);
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: transform 0.15s ease, color 0.15s ease;
 }
 
 a:hover {
-  color: var(--yellow);
+  color: var(--white);
+  transform: scale(1.05);
 }
 
 /* ── Scrollbar ───────────────────────────────────────────── */
-::-webkit-scrollbar        { width: 8px; }
-::-webkit-scrollbar-track  { background: var(--black); }
-::-webkit-scrollbar-thumb  { background: var(--red); border-radius: var(--radius-full); }
+::-webkit-scrollbar        { width: 12px; }
+::-webkit-scrollbar-track  { background: var(--black); border-left: 2px solid var(--white); }
+::-webkit-scrollbar-thumb  { background: var(--red); border: 2px solid var(--black); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--yellow); }
+::selection { background: var(--blue); color: var(--yellow); }
 
-::selection { background: var(--red); color: var(--white); }
 
 /* ============================================================
-   NAVBAR  (src/components/Navbar.jsx)
-   Targets the <nav> element directly
+   NAVBAR (Restored strictly to your original glassmorphism)
    ============================================================ */
 nav {
   position: sticky;
@@ -138,7 +156,6 @@ nav {
   box-shadow: 0 4px 24px rgba(0,0,0,0.45);
 }
 
-/* Logo pokeball image inside nav */
 nav .pokeball-logo-img {
   width: 40px;
   height: 40px;
@@ -156,7 +173,6 @@ nav .pokeball-logo-img:hover {
   animation: none;
 }
 
-/* Nav links — the | separators are plain text nodes in the JSX */
 nav a {
   font-family: var(--font-display);
   font-size: 1rem;
@@ -165,22 +181,23 @@ nav a {
   text-decoration: none;
   padding: 4px 10px;
   border-radius: var(--radius-sm);
-  transition: color 0.15s, background 0.15s;
+  transition: color 0.15s, background 0.15s, transform 0s; /* Overrode global transform */
+  text-shadow: none;
 }
 
 nav a:hover {
   color: var(--yellow);
   background: rgba(255, 203, 5, 0.08);
+  transform: none;
 }
 
-/* Username display text in nav */
 nav span,
 nav > * {
   color: rgba(248,248,248,0.65);
   font-size: 0.9rem;
+  font-weight: normal;
 }
 
-/* Logout button inside nav — override button defaults */
 nav button {
   background: none !important;
   border: none !important;
@@ -201,6 +218,23 @@ nav button:hover {
   background: rgba(255, 203, 5, 0.08) !important;
 }
 
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-right: auto;
+  text-decoration: none;
+}
+
+.nav-logo span {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 3px;
+  color: var(--yellow) !important;
+  text-shadow: 2px 2px 0 var(--black);
+  -webkit-text-stroke: 0;
+}
+
 @keyframes spin-idle {
   0%   { transform: rotate(0deg); }
   88%  { transform: rotate(0deg); }
@@ -208,20 +242,16 @@ nav button:hover {
   100% { transform: rotate(0deg); }
 }
 
-/* ============================================================
-   PAGE WRAPPER  — wraps every page's content
-   ============================================================ */
 
-/* Every page uses style={{ padding: "1rem" }} on a div.
-   We target <main> (from Layout) and also set up a nice max-width. */
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
 main {
   max-width: 900px;
   margin: 0 auto;
   padding: 2.5rem 1.5rem;
 }
 
-/* For pages that render outside Layout (directly under App router),
-   their root div gets this treatment via the body padding: */
 body > #root > * > *:not(nav) {
   max-width: 900px;
   margin: 0 auto;
@@ -229,66 +259,58 @@ body > #root > * > *:not(nav) {
 }
 
 /* ============================================================
-   BUTTONS  (used in createpost, login, register, feed, help)
+   BUTTONS (Game Boy style)
    ============================================================ */
 button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 0.55em 1.4em;
+  padding: 0.6em 1.5em;
   font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 500;
+  font-size: 1.2rem;
   letter-spacing: 2px;
   color: var(--white);
-  background: var(--red);
+  background: var(--blue);
   border: 3px solid var(--black);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   cursor: pointer;
   box-shadow: var(--shadow);
-  transition:
-    transform 0.15s var(--ease-bounce),
-    box-shadow 0.15s ease,
-    background 0.15s ease;
-  text-rendering: optimizeLegibility;
+  transition: transform 0.1s, box-shadow 0.1s;
+  text-shadow: 1px 1px 0 var(--black);
 }
 
 button:hover {
-  background: var(--red-dark);
+  background: var(--blue-light);
   transform: translate(-2px, -2px);
-  box-shadow: 6px 8px 0px rgba(0,0,0,0.55);
-  border-color: var(--black);
+  box-shadow: var(--shadow-hover);
 }
 
 button:active {
   transform: translate(2px, 2px);
-  box-shadow: 2px 3px 0px rgba(0,0,0,0.5);
+  box-shadow: 0px 0px 0px var(--black);
 }
 
-button:focus,
 button:focus-visible {
-  outline: 3px solid var(--yellow);
-  outline-offset: 3px;
+  outline: 3px dashed var(--yellow);
+  outline-offset: 4px;
 }
 
-/* Upvote button — targeted by inline style background checks in feed.jsx */
-/* We use a general approach since they use inline styles for active state */
 button[style*="background: \"#4CAF50\""],
 button[style*='background: "#4CAF50"'] {
   background: #4caf50;
-  border-color: #2e7d32;
+  border-color: var(--black);
 }
 
 /* ============================================================
-   FORMS & INPUTS  (login, register, createpost)
+   FORMS & INPUTS (Pokédex Screen Vibe)
    ============================================================ */
 form {
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: var(--surface);
-  border: 2px solid var(--border);
+  background: var(--white);
+  border: 4px solid var(--black);
   border-radius: var(--radius-lg);
   padding: 2rem;
   margin-top: 1.5rem;
@@ -300,36 +322,32 @@ input[type="password"],
 input[type="email"],
 textarea {
   width: 100%;
-  padding: 0.65rem 1rem;
+  padding: 0.8rem 1rem;
   font-family: var(--font-body);
+  font-weight: 700;
   font-size: 1rem;
-  color: var(--white);
-  background: rgba(255,255,255,0.07);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
+  color: var(--gb-dark);
+  background: var(--gb-green); /* Retro game screen color */
+  border: 3px solid var(--black);
+  border-radius: var(--radius-sm);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  transition: all 0.2s;
   margin-bottom: 1.2rem;
+  box-shadow: inset 3px 3px 0 rgba(0,0,0,0.1);
 }
 
-input[type="text"]::placeholder,
-input[type="password"]::placeholder,
-input[type="email"]::placeholder,
+input::placeholder,
 textarea::placeholder {
-  color: rgba(248,248,248,0.35);
+  color: rgba(15, 56, 15, 0.5);
   font-style: italic;
 }
 
-input[type="text"]:focus,
-input[type="password"]:focus,
-input[type="email"]:focus,
+input:focus,
 textarea:focus {
-  border-color: var(--yellow);
-  background: rgba(255,255,255,0.11);
-  box-shadow: 0 0 0 4px rgba(255, 203, 5, 0.15);
+  background: var(--white);
+  border-color: var(--blue);
 }
 
-/* The <br/><br/> spacers in the JSX add spacing — inputs handle their own gap */
 br { display: none; }
 
 form button[type="submit"] {
@@ -337,7 +355,8 @@ form button[type="submit"] {
   width: 100%;
   background: var(--yellow);
   color: var(--black);
-  font-size: 1.15rem;
+  text-shadow: none;
+  font-size: 1.3rem;
 }
 
 form button[type="submit"]:hover {
@@ -345,59 +364,46 @@ form button[type="submit"]:hover {
 }
 
 /* ============================================================
-   FEED PAGE  (src/pages/feed.jsx)
+   FEED PAGE (Trading Card aesthetics)
    ============================================================ */
-
-/* Post cards — they use inline border/radius/padding */
-/* We enhance via a targeted descendant selector approach */
 [style*="border: \"1px solid #ccc\""],
 [style*='border: "1px solid #ccc"'] {
-  border-color: var(--border) !important;
+  border-color: var(--black) !important;
 }
 
-/* General card-like divs inside main content */
 main > div > div,
 #root > * > div > div > div[style*="border"] {
   transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s;
 }
 
-/* The post card divs in feed have onClick and border styling */
-/* We style them via a CSS attribute selector */
 div[style*="cursor: \"pointer\""],
 div[style*='cursor: "pointer"'] {
-  background: var(--surface) !important;
-  border-color: var(--border) !important;
-  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s, border-color 0.2s;
+  background: var(--white) !important;
+  border: 4px solid var(--black) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow) !important;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
 div[style*="cursor: \"pointer\""]:hover,
 div[style*='cursor: "pointer"']:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), var(--shadow-yellow);
-  border-color: var(--yellow) !important;
+  transform: translate(-4px, -4px);
+  box-shadow: var(--shadow-hover) !important;
+  border-color: var(--blue) !important;
 }
 
-/* Post images */
 img {
-  border-radius: var(--radius-md);
-  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  border: 3px solid var(--black);
   object-fit: cover;
   display: block;
   max-width: 100%;
-  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s;
-}
-
-img:hover {
-  transform: scale(1.03);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  background: var(--gb-green);
 }
 
 /* ============================================================
    CLASS UTILITIES
-   Add these classNames to your JSX for richer styling
    ============================================================ */
-
-/* Page wrapper — add className="page" to root div of each page */
 .page {
   max-width: 860px;
   margin: 0 auto;
@@ -405,121 +411,116 @@ img:hover {
   animation: fadeInUp 0.4s ease both;
 }
 
-/* Pokédex-style card — add className="post-card" to post divs in feed */
+/* Pokémon Trading Card Look */
 .post-card {
-  background: var(--surface);
-  border: 2px solid var(--border);
+  background: var(--yellow); 
+  border: 4px solid var(--black);
   border-radius: var(--radius-lg);
   padding: 1.2rem 1.4rem;
   margin: 1.2rem 0;
   cursor: pointer;
-  transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s, border-color 0.2s;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, box-shadow 0.15s;
   position: relative;
   overflow: hidden;
 }
 
-.post-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,203,5,0.04) 0%, transparent 60%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s;
+.post-card p {
+  color: var(--black); /* Force text dark on yellow card */
+  font-weight: 700;
 }
 
-.post-card:hover::before { opacity: 1; }
-
 .post-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--yellow);
-  box-shadow: 0 10px 36px rgba(0,0,0,0.45), var(--shadow-yellow);
+  transform: translate(-4px, -4px);
+  border-color: var(--black);
+  box-shadow: var(--shadow-hover);
 }
 
 .post-card h3 {
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 1.3rem;
   letter-spacing: 1px;
-  color: var(--gray);
+  color: var(--black);
   margin-bottom: 0.4rem;
+  text-shadow: none;
 }
 
 .post-card p strong {
-  color: var(--yellow);
+  color: var(--red);
+  -webkit-text-stroke: 0;
 }
 
-/* Feed page title */
 .feed-title {
   font-family: var(--font-display);
-  font-size: 2.6rem;
+  font-size: 3rem;
   letter-spacing: 3px;
   color: var(--yellow);
-  text-shadow: 3px 3px 0 var(--black);
+  -webkit-text-stroke: 2px var(--blue);
+  text-shadow: 4px 4px 0 var(--black);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.6rem;
 }
 
-/* Voting buttons — add className="vote-btn vote-up" / "vote-btn vote-down" */
+/* Voting buttons */
 .vote-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 5px 14px;
   font-family: var(--font-display);
-  font-size: 0.9rem;
+  font-size: 1rem;
   letter-spacing: 1.5px;
   border: 2px solid var(--black);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  box-shadow: 2px 3px 0 rgba(0,0,0,0.4);
-  transition: transform 0.15s var(--ease-bounce), box-shadow 0.15s;
-  background: var(--surface);
-  color: var(--white);
+  box-shadow: 2px 2px 0 var(--black);
+  transition: transform 0.1s;
+  background: var(--white);
+  color: var(--black);
+  text-shadow: none;
 }
 
 .vote-btn:hover {
-  transform: translate(-1px, -2px);
-  box-shadow: 3px 5px 0 rgba(0,0,0,0.5);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--black);
 }
 
-.vote-btn.vote-up   { color: #4ade80; border-color: #4ade80; }
-.vote-btn.vote-down { color: var(--red-light); border-color: var(--red-light); }
-.vote-btn.active    { filter: brightness(1.2); }
+.vote-btn.vote-up    { background: #4ade80; }
+.vote-btn.vote-down  { background: var(--red-light); color: white; }
+.vote-btn.active     { filter: brightness(1.1); border-width: 3px; }
 
-/* Delete button — add className="btn-delete" */
 .btn-delete {
-  background: transparent !important;
-  color: var(--red-light) !important;
-  border-color: var(--red-light) !important;
+  background: var(--black) !important;
+  color: var(--white) !important;
+  border: 2px solid var(--black) !important;
   font-size: 0.85rem !important;
   padding: 4px 12px !important;
-  box-shadow: none !important;
+  text-shadow: none !important;
 }
 
 .btn-delete:hover {
-  background: rgba(227,53,13,0.15) !important;
+  background: var(--red) !important;
 }
 
-/* Type badge — add className="type-badge" to type spans/divs */
+/* Type badge */
 .type-badge {
   display: inline-flex;
   align-items: center;
   padding: 2px 12px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: #fff;
-  border: 2px solid rgba(0,0,0,0.25);
-  box-shadow: 1px 2px 0 rgba(0,0,0,0.3);
+  border: 2px solid var(--black);
+  box-shadow: 2px 2px 0 var(--black);
   background: var(--blue);
   margin-left: 4px;
 }
 
-/* Auth pages — add className="auth-page" to login/register root divs */
 .auth-page {
   max-width: 420px;
   margin: 4rem auto;
@@ -531,7 +532,6 @@ img:hover {
   margin-bottom: 0;
 }
 
-/* Form title bar with pokeball */
 .form-header {
   display: flex;
   align-items: center;
@@ -545,16 +545,22 @@ img:hover {
   border: none;
 }
 
-/* Post detail — add className="post-detail" to postdetail root div */
+/* Post detail - Made to look like a Pokédex Entry */
 .post-detail {
   max-width: 640px;
   margin: 3rem auto;
   padding: 2rem;
-  background: var(--surface);
-  border: 2px solid var(--border);
+  background: var(--white);
+  border: 4px solid var(--black);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   animation: fadeInUp 0.4s ease both;
+  color: var(--black);
+}
+
+.post-detail p {
+  color: var(--black);
+  font-weight: 600;
 }
 
 .post-detail img {
@@ -563,25 +569,16 @@ img:hover {
   object-fit: contain;
   border-radius: var(--radius-md);
   margin-top: 1.2rem;
-  border-color: var(--border);
+  background: var(--gb-green);
+  border: 4px solid var(--black);
 }
 
 .post-detail h2 {
-  font-size: 2rem;
-  color: var(--yellow);
-  letter-spacing: 3px;
+  font-size: 2.5rem;
 }
 
-/* Create post page — add className="create-page" to createpost root div */
-.create-page {
+.create-page, .help-page {
   max-width: 540px;
-  margin: 2.5rem auto;
-  padding: 0 1.5rem;
-}
-
-/* Help page */
-.help-page {
-  max-width: 680px;
   margin: 2.5rem auto;
   padding: 0 1.5rem;
 }
@@ -615,58 +612,35 @@ img:hover {
   transform: translate(-50%, -50%);
 }
 
-/* Empty state */
 .empty-state {
   text-align: center;
   padding: 4rem 1rem;
-  color: var(--gray);
+  color: var(--white);
   font-family: var(--font-display);
   font-size: 1.4rem;
   letter-spacing: 2px;
+  text-shadow: 2px 2px 0 var(--black);
 }
 
-/* Alert / notice box */
 .alert {
   padding: 0.8rem 1.2rem;
   border-radius: var(--radius-md);
-  border: 2px solid;
-  font-size: 0.95rem;
+  border: 3px solid var(--black);
+  font-size: 1rem;
+  font-weight: bold;
   margin: 1rem 0;
+  box-shadow: 2px 2px 0 var(--black);
 }
 
-.alert-success { background: rgba(74,222,128,0.08);  border-color: #4ade80;        color: #4ade80; }
-.alert-error   { background: rgba(227,53,13,0.10);   border-color: var(--red);     color: var(--red-light); }
-.alert-warning { background: rgba(255,203,5,0.08);   border-color: var(--yellow);  color: var(--yellow); }
+.alert-success { background: #4ade80; color: var(--black); }
+.alert-error   { background: var(--red); color: var(--white); }
+.alert-warning { background: var(--yellow); color: var(--black); }
 
-/* Divider — add <div className="divider" /> between sections */
 .divider {
-  height: 3px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    var(--red) 20%,
-    var(--yellow) 50%,
-    var(--red) 80%,
-    transparent 100%
-  );
+  height: 4px;
+  background: var(--black);
   border-radius: var(--radius-full);
   margin: 2rem 0;
-}
-
-/* Pokéball navbar logo helper — wrap your img in a div with this class */
-.nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-right: auto;
-  text-decoration: none;
-}
-
-.nav-logo span {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  letter-spacing: 3px;
-  color: var(--yellow) !important;
-  text-shadow: 2px 2px 0 var(--black);
 }
 
 /* ── Animations ──────────────────────────────────────────── */
@@ -686,7 +660,7 @@ img:hover {
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-8px); }
+  50%        { transform: translateY(-8px); }
 }
 
 /* ── Responsive ──────────────────────────────────────────── */

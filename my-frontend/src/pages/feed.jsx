@@ -160,7 +160,7 @@ function Feed({ posts, setPosts, loggedInUser }) {
                 cursor: "pointer"
               }}
             >
-              <h3>{post.username}</h3>
+              <h3 style={{ color: "yellow" }}>{post.username}</h3>
               <p><strong>Pokemon:</strong> {post.name}</p>
               {post.imageUrl && openPostId !== post.id && (
                 <img

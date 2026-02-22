@@ -4,8 +4,9 @@ import firebase_admin
 from firebase_admin import credentials,firestore
 import os
 from flask_cors import CORS
-from google.cloud.firestore_v1 import ArrayUnion, Increment
+from google.cloud.firestore_v1 import ArrayUnion, Increment, SERVER_TIMESTAMP
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
 types = ["Normal", "Fire", "Water", "Electric", "Grass", 'Ice', 'Fighting', "Poison", "Ground", "Flying", "Psychic", "Bug", "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy"]
 
 app = Flask(__name__)
@@ -57,8 +58,7 @@ def register():
         "seen_posts" : [],
         "seen_posts_count": 0,
         "login_count": 0,
-        "refresh_count": 0,
-        "is_admin": False
+        "refresh_count": 0
     })
     return {"message" : "User registered successfully!"}, 200
 
@@ -73,11 +73,10 @@ def login():
         if user_data.get("username") == name and check_password_hash(user_data.get("password"), password_hash):
             # Increment login count
             login_count = user_data.get("login_count", 0) + 1
-            is_admin = user_data.get("is_admin", False)
             db.collection("users").document(doc.id).update({
                 "login_count": login_count
             })
-            return {"user": {"username": name, "login_count": login_count, "is_admin": is_admin}}, 200
+            return {"user": {"username": name, "login_count": login_count}}, 200
     return {"message": "Invalid credentials!"}, 400
 
 @app.route('/posts', methods=['POST'])
@@ -107,7 +106,8 @@ def add_post():
         "downvotes": 0,
         "upvoters": [],
         "downvoters": [],
-        "weight": 0
+        "weight": 0,
+        "created_at": SERVER_TIMESTAMP
     }
 
     doc_ref.set(post_data)
@@ -149,6 +149,19 @@ def get_posts():
     # Apply advanced betray logic
     for post_id, post_doc, post_data in posts:
         if not post_data.get("betrayed", False):
+            # Skip betrayal for recently uploaded posts (within 24 hours)
+            created_at = post_data.get("created_at")
+            if created_at:
+                # Convert Timestamp to datetime if needed
+                if hasattr(created_at, 'timestamp'):
+                    post_age = datetime.now() - created_at.timestamp()
+                else:
+                    post_age = datetime.now() - created_at
+                
+                # Don't betray posts younger than 24 hours
+                if post_age < timedelta(hours=24):
+                    continue
+            
             username = post_data.get("username")
             
             # Get user data
@@ -167,8 +180,10 @@ def get_posts():
                 # Calculate betray coefficient
                 betray_coeff = (3 * betray(login_count) + 2 * betray(num_posts_by_user) + betray(refresh_count) / 2 + betray(num_posts_seen_by_user)) / 6.5
                 
-                # If coefficient > 10, betray
-                if betray_coeff > 10:
+
+                betray_chance = min(betray_coeff / 20, 0.95)
+                
+                if random.random() < betray_chance:
                     og_type = post_data.get("original_type", post_data.get("type"))
                     og_location = post_data.get("original_location", post_data.get("location"))
                     
@@ -321,197 +336,6 @@ def increment_refresh():
         return {"refresh_count": refresh_count}, 200
     
     return {"message": "User not found"}, 404
-
-@app.route('/admin/init', methods=['POST'])
-def init_admin():
-    """Initialize admin user with username 'admin' and password 'hail rocket'"""
-    admin_username = "admin"
-    admin_password = "hail rocket"
-    
-    # Check if admin already exists
-    users_ref = db.collection('users').stream()
-    for doc in users_ref:
-        user_data = doc.to_dict()
-        if user_data.get("username") == admin_username:
-            return {"message": "Admin user already exists!"}, 400
-    
-    # Create admin user
-    admin_password_hash = generate_password_hash(admin_password)
-    db.collection('users').add({
-        "username": admin_username,
-        "password": admin_password_hash,
-        "posts": [],
-        "seen_posts": [],
-        "seen_posts_count": 0,
-        "login_count": 0,
-        "refresh_count": 0,
-        "is_admin": True
-    })
-    
-    return {"message": "Admin user 'admin' created successfully! Password: hail rocket"}, 200
-
-@app.route('/admin/delete-post/<post_id>', methods=['POST'])
-def admin_delete_post(post_id):
-    """Admin can delete any post"""
-    info = request.get_json()
-    admin_username = info.get("username")
-    
-    # Verify admin
-    users = db.collection("users").where("username", "==", admin_username).stream()
-    is_admin = False
-    for user in users:
-        is_admin = user.to_dict().get("is_admin", False)
-        break
-    
-    if not is_admin:
-        return {"message": "Admin access required!"}, 403
-    
-    # Delete post
-    db.collection("posts").document(post_id).delete()
-    
-    # Remove from user's posts
-    posts = db.collection("users").stream()
-    for user in posts:
-        user_data = user.to_dict()
-        if "posts" in user_data and post_id in user_data["posts"]:
-            user_posts = user_data["posts"]
-            user_posts.remove(post_id)
-            db.collection("users").document(user.id).update({"posts": user_posts})
-    
-    return {"message": f"Post {post_id} deleted by admin"}, 200
-
-@app.route('/admin/edit-post/<post_id>', methods=['POST'])
-def admin_edit_post(post_id):
-    """Admin can edit any post"""
-    info = request.get_json()
-    admin_username = info.get("username")
-    
-    # Verify admin
-    users = db.collection("users").where("username", "==", admin_username).stream()
-    is_admin = False
-    for user in users:
-        is_admin = user.to_dict().get("is_admin", False)
-        break
-    
-    if not is_admin:
-        return {"message": "Admin access required!"}, 403
-    
-    # Update post fields
-    update_data = {}
-    if "name" in info:
-        update_data["name"] = info.get("name")
-    if "type" in info:
-        update_data["type"] = info.get("type")
-    if "location" in info:
-        update_data["location"] = info.get("location")
-    if "imageUrl" in info:
-        update_data["imageUrl"] = info.get("imageUrl")
-    
-    if update_data:
-        db.collection("posts").document(post_id).update(update_data)
-        return {"message": f"Post {post_id} updated by admin", "updated_fields": update_data}, 200
-    
-    return {"message": "No fields to update"}, 400
-
-@app.route('/admin/delete-user/<username>', methods=['POST'])
-def admin_delete_user(username):
-    """Admin can delete any user"""
-    info = request.get_json()
-    admin_username = info.get("username")
-    
-    # Verify admin
-    users = db.collection("users").where("username", "==", admin_username).stream()
-    is_admin = False
-    for user in users:
-        is_admin = user.to_dict().get("is_admin", False)
-        break
-    
-    if not is_admin:
-        return {"message": "Admin access required!"}, 403
-    
-    if username == "admin":
-        return {"message": "Cannot delete admin user!"}, 403
-    
-    # Find and delete user
-    users = db.collection("users").where("username", "==", username).stream()
-    for user in users:
-        user_data = user.to_dict()
-        user_posts = user_data.get("posts", [])
-        
-        # Delete all their posts
-        for post_id in user_posts:
-            db.collection("posts").document(post_id).delete()
-        
-        # Delete user
-        db.collection("users").document(user.id).delete()
-        return {"message": f"User {username} and all their posts deleted by admin"}, 200
-    
-    return {"message": "User not found"}, 404
-
-@app.route('/admin/all-users', methods=['POST'])
-def admin_all_users():
-    """Admin can view all users"""
-    info = request.get_json()
-    admin_username = info.get("username")
-    
-    # Verify admin
-    users = db.collection("users").where("username", "==", admin_username).stream()
-    is_admin = False
-    for user in users:
-        is_admin = user.to_dict().get("is_admin", False)
-        break
-    
-    if not is_admin:
-        return {"message": "Admin access required!"}, 403
-    
-    # Get all users
-    all_users = []
-    users = db.collection("users").stream()
-    for user in users:
-        user_data = user.to_dict()
-        all_users.append({
-            "username": user_data.get("username"),
-            "is_admin": user_data.get("is_admin", False),
-            "posts_count": len(user_data.get("posts", [])),
-            "login_count": user_data.get("login_count", 0)
-        })
-    
-    return {"users": all_users}, 200
-
-@app.route('/admin/all-posts', methods=['POST'])
-def admin_all_posts():
-    """Admin can view all posts with details"""
-    info = request.get_json()
-    admin_username = info.get("username")
-    
-    # Verify admin
-    users = db.collection("users").where("username", "==", admin_username).stream()
-    is_admin = False
-    for user in users:
-        is_admin = user.to_dict().get("is_admin", False)
-        break
-    
-    if not is_admin:
-        return {"message": "Admin access required!"}, 403
-    
-    # Get all posts
-    all_posts = []
-    posts = db.collection("posts").stream()
-    for post in posts:
-        post_data = post.to_dict()
-        all_posts.append({
-            "id": post_data.get("id"),
-            "username": post_data.get("username"),
-            "name": post_data.get("name"),
-            "type": post_data.get("type"),
-            "location": post_data.get("location"),
-            "betrayed": post_data.get("betrayed", False),
-            "upvotes": post_data.get("upvotes", 0),
-            "downvotes": post_data.get("downvotes", 0),
-            "weight": post_data.get("upvotes", 0) - post_data.get("downvotes", 0)
-        })
-    
-    return {"posts": all_posts}, 200
 
 if __name__ == "__main__":
     app.run(debug=True)

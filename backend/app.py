@@ -15,7 +15,14 @@ cred = credentials.Certificate(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-CORS(app) # This allows  React frontend to talk to backend
+# Configure CORS for production and development
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000", "https://pokedex-frontend.vercel.app"],
+        "methods": ["GET", "POST", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 num_of_post = 0
 
@@ -341,4 +348,5 @@ def increment_refresh():
     return {"message": "User not found"}, 404
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 function Feed({ posts, setPosts, loggedInUser }) {
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ function Feed({ posts, setPosts, loggedInUser }) {
 
   // Fetch posts from backend when component loads
   useEffect(() => {
-    fetch("http://localhost:5000/posts")
+    fetch(`${API_URL}/posts`)
       .then((res) => res.json())
       .then((data) => {
         if (data.posts) {
@@ -39,7 +40,7 @@ function Feed({ posts, setPosts, loggedInUser }) {
     
     if (window.confirm("Are you sure you want to delete this post?")) {
       try {
-        const res = await fetch(`http://localhost:5000/posts/${postId}`, {
+        const res = await fetch(`${API_URL}/posts/${postId}`, {
           method: "DELETE"
         });
 
@@ -65,7 +66,7 @@ function Feed({ posts, setPosts, loggedInUser }) {
     }
     
     try {
-      const res = await fetch(`http://localhost:5000/posts/${postId}/upvote`, {
+      const res = await fetch(`${API_URL}/posts/${postId}/upvote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: loggedInUser.username })
@@ -99,7 +100,7 @@ function Feed({ posts, setPosts, loggedInUser }) {
     }
     
     try {
-      const res = await fetch(`http://localhost:5000/posts/${postId}/downvote`, {
+      const res = await fetch(`${API_URL}/posts/${postId}/downvote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: loggedInUser.username })
@@ -145,7 +146,7 @@ function Feed({ posts, setPosts, loggedInUser }) {
                   setOpenPostId(opening ? post.id : null);
 
                   if (opening && loggedInUser) {
-                    fetch(`http://localhost:5000/posts/${post.id}/view`, {
+                    fetch(`${API_URL}/posts/${post.id}/view`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ username: loggedInUser.username })

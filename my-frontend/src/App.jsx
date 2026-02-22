@@ -7,6 +7,7 @@ import Createpost from "./pages/createpost";
 import Login from "./pages/login";
 import Register from "./pages/register";
 import Navbar from "./components/Navbar";
+import { API_URL } from "./config";
 
 function App() {
   const [loggedInUser, setLoggedInUser] = useState(null);
@@ -21,7 +22,7 @@ function App() {
       
       // Increment refresh count
       if (user.username) {
-        fetch("http://localhost:5000/refresh", {
+        fetch(`${API_URL}/refresh`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username: user.username })

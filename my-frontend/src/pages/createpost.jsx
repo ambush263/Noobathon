@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 function Createpost({ posts, setPosts, loggedInUser }) {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ function Createpost({ posts, setPosts, loggedInUser }) {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/posts", {
+      const res = await fetch(`${API_URL}/posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newPost),

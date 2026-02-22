@@ -16,7 +16,17 @@ function App() {
   useEffect(() => {
     const savedUser = localStorage.getItem("loggedInUser");
     if (savedUser) {
-      setLoggedInUser(JSON.parse(savedUser));
+      const user = JSON.parse(savedUser);
+      setLoggedInUser(user);
+      
+      // Increment refresh count
+      if (user.username) {
+        fetch("http://localhost:5000/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: user.username })
+        }).catch(err => console.error("Error incrementing refresh:", err));
+      }
     }
   }, []);
 

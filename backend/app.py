@@ -15,7 +15,7 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 app = Flask(__name__)
-CORS(app) # This allows your React frontend to talk to this backend
+CORS(app) # This allows  React frontend to talk to backend
 
 num_of_post = 0
 
@@ -63,7 +63,9 @@ def register():
         "username": name,
         "password": password,
         "posts": [],
-        "seen_posts": 0
+        "seen_posts": 0,
+        "login_count": 0,
+        "refresh_count": 0
     })
     return {"message" : "User registered successfully!"}, 200
 
@@ -76,7 +78,12 @@ def login():
     for doc in users_ref:
         user_data = doc.to_dict()
         if user_data.get("username") == name and user_data.get("password") == password:
-            return {"user": {"username" : name}}, 200
+            # Increment login count
+            login_count = user_data.get("login_count", 0) + 1
+            db.collection("users").document(doc.id).update({
+                "login_count": login_count
+            })
+            return {"user": {"username": name, "login_count": login_count}}, 200
     return {"message": "Invalid credentials!"}, 400
 
 @app.route('/posts', methods=['POST'])
@@ -98,7 +105,15 @@ def add_post():
         "name": name,
         "type": type_,
         "location": location,
-        "imageUrl": image_url
+        "imageUrl": image_url,
+        "original_type": type_,
+        "original_location": location,
+        "betrayed": False,
+        "upvotes": 0,
+        "downvotes": 0,
+        "upvoters": [],
+        "downvoters": [],
+        "weight": 0
     }
 
     doc_ref.set(post_data)
@@ -115,33 +130,75 @@ def add_post():
 def get_posts():
     posts_ref = db.collection('posts').stream()
     posts = []
-    post_index = 0
     
     for doc in posts_ref:
-        post_index += 1
         post_data = doc.to_dict()
         post_data["id"] = doc.id
-        posts.append(post_data)
+        posts.append((doc.id, doc, post_data))
     
-    # Collect all original locations
-    all_locations = [post.get("location") for post in posts]
-    
-    # Apply betray logic
-    for index, post in enumerate(posts, 1):
-        current_betray_score = betray(index)
-        
-        if current_betray_score > 5:
-            # Betray the type
-            og_type = post.get("type")
-            wrong_types = [t for t in types if t != og_type]
-            post["type"] = random.choice(wrong_types)
+    # Apply advanced betray logic
+    for post_id, post_doc, post_data in posts:
+        if not post_data.get("betrayed", False):
+            username = post_data.get("username")
             
-            # Betray the location - shuffle all locations and reassign
-            shuffled_locations = all_locations.copy()
-            random.shuffle(shuffled_locations)
-            post["location"] = shuffled_locations[index - 1]
+            # Get user data
+            user_docs = db.collection("users").where("username", "==", username).stream()
+            user_data = None
+            for user_doc in user_docs:
+                user_data = user_doc.to_dict()
+                break
+            
+            if user_data:
+                login_count = user_data.get("login_count", 0)
+                refresh_count = user_data.get("refresh_count", 0)
+                num_posts_by_user = len(user_data.get("posts", []))
+                
+                # Calculate betray coefficient
+                betray_coeff = (3 * betray(login_count) + 2 * betray(num_posts_by_user) + betray(refresh_count) / 2) / 5.5
+                
+                # If coefficient > 10, betray
+                if betray_coeff > 10:
+                    og_type = post_data.get("original_type", post_data.get("type"))
+                    og_location = post_data.get("original_location", post_data.get("location"))
+                    
+                    # Get all original locations for shuffling
+                    all_locations = []
+                    for _, _, p in posts:
+                        if not p.get("betrayed", False):
+                            all_locations.append(p.get("original_location", p.get("location")))
+                    
+                    # Shuffle locations
+                    random.shuffle(all_locations)
+                    
+                    # Betray type
+                    wrong_types = [t for t in types if t != og_type]
+                    new_type = random.choice(wrong_types) if wrong_types else og_type
+                    
+                    # Betray location
+                    new_location = all_locations[0] if all_locations else og_location
+                    
+                    # Update post
+                    db.collection("posts").document(post_id).update({
+                        "type": new_type,
+                        "location": new_location,
+                        "betrayed": True
+                    })
+                    
+                    post_data["type"] = new_type
+                    post_data["location"] = new_location
+                    post_data["betrayed"] = True
     
-    return {"posts": posts}, 200
+    # Return only post data (without doc references) and include weight calculation
+    result_posts = []
+    for _, _, post_data in posts:
+        weight = post_data.get("upvotes", 0) - post_data.get("downvotes", 0)
+        post_data["weight"] = weight
+        result_posts.append(post_data)
+    
+    # Sort by weight (descending)
+    result_posts.sort(key=lambda x: x.get("weight", 0), reverse=True)
+    
+    return {"posts": result_posts}, 200
 
 @app.route('/posts/<post_id>', methods=['DELETE'])
 def delete_post(post_id):
@@ -160,6 +217,99 @@ def delete_post(post_id):
             })
     
     return {"message": "Post deleted successfully!"}, 200
+
+@app.route('/posts/<post_id>/upvote', methods=['POST'])
+def upvote_post(post_id):
+    info = request.get_json()
+    username = info.get("username")
+    
+    post_doc = db.collection("posts").document(post_id)
+    post_data = post_doc.get().to_dict() if post_doc.get().exists else None
+    
+    if not post_data:
+        return {"message": "Post not found"}, 404
+    
+    upvoters = post_data.get("upvoters", [])
+    downvoters = post_data.get("downvoters", [])
+    
+    # Check if user already upvoted
+    if username in upvoters:
+        # Remove upvote
+        upvoters.remove(username)
+        post_doc.update({
+            "upvotes": len(upvoters),
+            "upvoters": upvoters
+        })
+        return {"upvoters": upvoters, "downvoters": downvoters, "voted": None}, 200
+    
+    # Check if user downvoted, remove it
+    if username in downvoters:
+        downvoters.remove(username)
+    
+    # Add upvote
+    upvoters.append(username)
+    post_doc.update({
+        "upvotes": len(upvoters),
+        "downvotes": len(downvoters),
+        "upvoters": upvoters,
+        "downvoters": downvoters
+    })
+    
+    return {"upvoters": upvoters, "downvoters": downvoters, "voted": "up"}, 200
+
+@app.route('/posts/<post_id>/downvote', methods=['POST'])
+def downvote_post(post_id):
+    info = request.get_json()
+    username = info.get("username")
+    
+    post_doc = db.collection("posts").document(post_id)
+    post_data = post_doc.get().to_dict() if post_doc.get().exists else None
+    
+    if not post_data:
+        return {"message": "Post not found"}, 404
+    
+    upvoters = post_data.get("upvoters", [])
+    downvoters = post_data.get("downvoters", [])
+    
+    # Check if user already downvoted
+    if username in downvoters:
+        # Remove downvote
+        downvoters.remove(username)
+        post_doc.update({
+            "downvotes": len(downvoters),
+            "downvoters": downvoters
+        })
+        return {"upvoters": upvoters, "downvoters": downvoters, "voted": None}, 200
+    
+    # Check if user upvoted, remove it
+    if username in upvoters:
+        upvoters.remove(username)
+    
+    # Add downvote
+    downvoters.append(username)
+    post_doc.update({
+        "upvotes": len(upvoters),
+        "downvotes": len(downvoters),
+        "upvoters": upvoters,
+        "downvoters": downvoters
+    })
+    
+    return {"upvoters": upvoters, "downvoters": downvoters, "voted": "down"}, 200
+
+@app.route('/refresh', methods=['POST'])
+def increment_refresh():
+    info = request.get_json()
+    username = info.get("username")
+    
+    users = db.collection("users").where("username", "==", username).stream()
+    for user in users:
+        refresh_count = user.to_dict().get("refresh_count", 0) + 1
+        db.collection("users").document(user.id).update({
+            "refresh_count": refresh_count
+        })
+        return {"refresh_count": refresh_count}, 200
+    
+    return {"message": "User not found"}, 404
 
 if __name__ == "__main__":
     app.run(debug=True)

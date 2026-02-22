@@ -152,15 +152,18 @@ def get_posts():
             # Skip betrayal for recently uploaded posts (within 24 hours)
             created_at = post_data.get("created_at")
             if created_at:
-                # Convert Timestamp to datetime if needed
-                if hasattr(created_at, 'timestamp'):
-                    post_age = datetime.now() - created_at.timestamp()
+                # Convert Firestore Timestamp to datetime if needed
+                if hasattr(created_at, 'to_pydatetime'):
+                    created_at_dt = created_at.to_pydatetime()
+                elif isinstance(created_at, datetime):
+                    created_at_dt = created_at
                 else:
-                    post_age = datetime.now() - created_at
+                    created_at_dt = None
                 
-                # Don't betray posts younger than 24 hours
-                if post_age < timedelta(hours=24):
-                    continue
+                if created_at_dt:
+                    post_age = datetime.now(created_at_dt.tzinfo) - created_at_dt
+                    if post_age < timedelta(minutes=5):
+                        continue
             
             username = post_data.get("username")
             

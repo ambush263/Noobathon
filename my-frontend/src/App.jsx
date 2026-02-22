@@ -6,7 +6,7 @@ import Feed from "./pages/feed";
 import Createpost from "./pages/createpost";
 import Login from "./pages/login";
 import Register from "./pages/register";
-import Navbar from "./components/navbar";
+import Navbar from "./components/Navbar";
 
 function App() {
   const [loggedInUser, setLoggedInUser] = useState(null);

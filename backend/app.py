@@ -87,6 +87,7 @@ def add_post():
     name = info.get("name")
     type_ = info.get("type")
     location = info.get("location")
+    image_url = info.get("imageUrl")
 
     # Create post doc with known ID
     doc_ref = db.collection("posts").document()
@@ -96,7 +97,8 @@ def add_post():
         "username": username,
         "name": name,
         "type": type_,
-        "location": location
+        "location": location,
+        "imageUrl": image_url
     }
 
     doc_ref.set(post_data)
@@ -113,10 +115,51 @@ def add_post():
 def get_posts():
     posts_ref = db.collection('posts').stream()
     posts = []
+    post_index = 0
+    
     for doc in posts_ref:
+        post_index += 1
         post_data = doc.to_dict()
         post_data["id"] = doc.id
         posts.append(post_data)
+    
+    # Collect all original locations
+    all_locations = [post.get("location") for post in posts]
+    
+    # Apply betray logic
+    for index, post in enumerate(posts, 1):
+        current_betray_score = betray(index)
+        
+        if current_betray_score > 5:
+            # Betray the type
+            og_type = post.get("type")
+            wrong_types = [t for t in types if t != og_type]
+            post["type"] = random.choice(wrong_types)
+            
+            # Betray the location - shuffle all locations and reassign
+            shuffled_locations = all_locations.copy()
+            random.shuffle(shuffled_locations)
+            post["location"] = shuffled_locations[index - 1]
+    
     return {"posts": posts}, 200
+
+@app.route('/posts/<post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    # Delete from posts collection
+    db.collection("posts").document(post_id).delete()
+    
+    # Remove from user's posts array
+    users = db.collection("users").stream()
+    for user in users:
+        user_data = user.to_dict()
+        if "posts" in user_data and post_id in user_data["posts"]:
+            user_posts = user_data["posts"]
+            user_posts.remove(post_id)
+            db.collection("users").document(user.id).update({
+                "posts": user_posts
+            })
+    
+    return {"message": "Post deleted successfully!"}, 200
+
 if __name__ == "__main__":
     app.run(debug=True)

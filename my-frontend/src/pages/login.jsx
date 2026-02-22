@@ -20,6 +20,7 @@ function Login({ setLoggedInUser }) {
 
       if (res.ok) {
         setLoggedInUser(data.user);
+        localStorage.setItem("loggedInUser", JSON.stringify(data.user));
         alert("Login successful!");
         navigate("/");
       } else {

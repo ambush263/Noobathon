@@ -19,7 +19,7 @@ function Createpost({ posts, setPosts, loggedInUser }) {
 
     const newPost = {
       username: loggedInUser.username,
-      pokemonName,
+      name: pokemonName,
       type,
       location,
       imageUrl,
